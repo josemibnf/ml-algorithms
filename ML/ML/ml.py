@@ -26,7 +26,6 @@ def gini_impurity(part):
     imp = 0
     for v in results.values():
         imp += (v / float(total))**2
-
     return 1 - imp
 
 
@@ -35,28 +34,26 @@ def entropy(rows):
     total = len(rows)
     results = unique_counts(rows)
     ent = 0.0
- 
     for v in results.values():
         p = v / float(total)
         ent -= p * log(p, 2)
- 
     return ent
  
  
 def divide_set(part, column, value):
-    def split_fun(elem): return part[column[elem]] == value
+    def split_fun(elem): return part[elem[column]] == value
     if isinstance(value, int) or isinstance(value, float):
-        def split_fun(elem): return part[column[elem]] <= value
+        def split_fun(elem): return part[elem[column]] <= value
 
     set1, set2 = [], []
-    for elem in part[column]:
+    for elem in part:
         if split_fun(elem):
             set1.append(elem)
         else:
             set2.append(elem)
     return (set1, set2)
 
- 
+
 class decisionnode(object):
  
     def __init__(self, col=-1, value=None, results=None, tb=None, fb=None):
