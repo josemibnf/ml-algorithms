@@ -63,19 +63,12 @@ class decisionnode(object):
         self.tb = tb
         self.fb = fb
         
-    def actualizar(self):
-        if self.tb != None: #Las ramas finales no las actualizamos.
-            self.tb[0].actualizar()
-            self.fb[0].actualizar()
-            self.tb == self.tb[0]
-            self.fb == self.fb[0]
-
-"""
-La version iterativa del constructor del árbol usa recursividad con el fin de seguir las pautas dadas en las transparencias.
-De esta forma  los atributos tb y fb son decissionNodes.
-Se habría podido hacer que tb y fb fueran listas que contubieran los decissionNodes.
-
-"""
+    def actualiza(self,  col=-1, value=None, results=None tb=None, fb=None):
+        self.col = col 
+        self.value = value
+        self.results = results
+        self.tb=tb
+        self.fb=fb
 
 def buildtree(part, scoref=gini_impurity, beta=0):
 	if len(part) == 0:
@@ -140,19 +133,18 @@ def buildtree_ite(part, scoref=gini_impurity, beta=0):
                     best_sets = set1,set2
 
         if best_gain > beta:
-            true = []
-            false = []
+            true = decisionnode()
+            false = decisionnode()
             fringe.put((true ,(best_sets[0]) ))
             fringe.put((false ,(best_sets[1]) ))
             if rootNode == None:
                 rootNode = decisionnode(best_criteria[0], best_criteria[1], None, true, false)
             else:
-                nodo[0][0] = decisionnode(best_criteria[0], best_criteria[1], None, true, false)
+                nodo[0].actualiza(best_criteria[0], best_criteria[1], None, true, false)
         else:
-            nodo[0][0] = decisionnode(results=unique_counts(part))
+            nodo[0].actualiza(results=unique_counts(part))
 
 
-        rootNode.actualizar() #Carga los nodos de las listas(mutables) a las variables(inmutables), porque ya no se van a actualizar mas.
         return rootNode
 
 
@@ -172,8 +164,7 @@ def printtree(tree, indent=''):
  
 def classify(obj, tree):
     if tree.results is not None:    #Es nodo hoja.
-
-        return tree.results   
+        return tree.results
     else:
         def split_fun(elem): return elem[tree.col] == tree.value
         if isinstance(tree.value, int) or isinstance(tree.value, float):
@@ -186,8 +177,15 @@ def classify(obj, tree):
         
  
 def test_performance(testset, trainingset):
-    pass
- 
+    tree = buildtree(part=read(trainingset))
+    test = read(testset)
+    elements = len(test) - 1
+    for elem in range(0, elements):  
+        obj = [elements_value[elem] for elements_value in test]
+        if elem in classify(elem, tree):
+            correct+=1
+    print(correct/elements)
+
  
 def prune(tree, threshold):
     pass
