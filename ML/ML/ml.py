@@ -2,12 +2,10 @@ import sys
 from queue import Queue 
 
 def read(data, file_name):
-    ret = []
     with open(file_name, 'r') as f:
         for line in f:
-            treated_line = line.rstrip('\n').split('\t')
-            ret.append(treated_line)
-    return ret
+            treated_line = [i for i in line.rstrip('\n').split('\t')]
+            data.append(treated_line)
 
 
 def unique_counts(part):
@@ -41,9 +39,9 @@ def entropy(rows):
  
  
 def divide_set(part, column, value):
-    def split_fun(elem): return part[elem[column]] == value
+    def split_fun(elem): return elem[column] == value
     if isinstance(value, int) or isinstance(value, float):
-        def split_fun(elem): return part[elem[column]] <= value
+        def split_fun(elem): return elem[column] <= value
 
     set1, set2 = [], []
     for elem in part:
@@ -63,7 +61,7 @@ class decisionnode(object):
         self.tb = tb
         self.fb = fb
         
-    def actualiza(self,  col=-1, value=None, results=None tb=None, fb=None):
+    def actualiza(self,  col=-1, value=None, results=None, tb=None, fb=None):
         self.col = col 
         self.value = value
         self.results = results
@@ -71,42 +69,40 @@ class decisionnode(object):
         self.fb=fb
 
 def buildtree(part, scoref=gini_impurity, beta=0):
-	if len(part) == 0:
-		return decisionnode()
-	current_score = scoref(part)  
-
-	best_gain = 0
-	best_criteria = None
-	best_sets = None
-	elements = len(part[0]) - 1
-	for elem in range(0, elements):  #Recorremos todas los valores para saber cual es la columna/elemento que mayor descenso de impureza/desorden ofrece.
-		element_values = set([elements_value[elem] for elements_value in part])
+    if len(part) == 0:
+        return decisionnode()
+    current_score = scoref(part)
+    best_gain = 0
+    best_criteria = None
+    best_sets = None
+    elements = len(part) - 1
+    for elem in part:  #Recorremos todas los valores para saber cual es la columna/elemento que mayor descenso de impureza/desorden ofrece.
         colum=0
-        for value in element_values:
+        for value in elem:
             set1, set2 = divide_set(part, colum, value)
-            colum=colum+1
             probability1 = len(set1) / len(part)
             probability2 = len(set1) / len(part)
 
             current_gain = current_score - (probability1 * scoref(set1)) - (probability2 * scoref(set2))
-
+            
             if current_gain > best_gain and len(set1) > 0 and len(set2) > 0:
-				best_gain = current_gain
-				best_criteria = elem, value
-				best_sets = set1,set2
+                best_gain = current_gain
+                best_criteria = colum, value
+                best_sets = set1,set2
+            colum=colum+1
+                
+        if best_gain > beta:  #¿Hemos conseguido algun split disminuya la impureza/desorden por encima de beta?
+            true = buildtree(best_sets[0], scoref, beta)
+            false = buildtree(best_sets[1], scoref, beta)
+            return decisionnode(best_criteria[0], best_criteria[1], None, true, false)
 
-	if best_gain > beta:  #¿Hemos conseguido algun split disminuya la impureza/desorden por encima de beta?
-		true = buildtree(best_sets[0], scoref, beta)
-		false = buildtree(best_sets[1], scoref, beta)
-		return decisionnode(best_criteria[0], best_criteria[1], None, true, false)
-
-	else:
-		return decisionnode(results=unique_counts(part))
+    else:
+        return decisionnode(results=unique_counts(part))
  
 def buildtree_ite(part, scoref=gini_impurity, beta=0):
     rootNode=None
     fringe=Queue()
-    fringe.put(([] ,part))
+    fringe.put(([], part))
     while fringe.empty() == False:
         nodo = fringe.get()
         current_score = scoref(nodo[1])  
@@ -114,23 +110,21 @@ def buildtree_ite(part, scoref=gini_impurity, beta=0):
         best_gain = 0
         best_criteria = None
         best_sets = None
-        elements = len(nodo[1][0]) - 1
-        
-        for elem in range(0, elements):  
-            element_values = set([elements_value[elem] for elements_value in nodo[1]])
-
-            for value in element_values: 
-                set1, set2 = divide_set(nodo[1], elem, value)
-
-                probability1 = len(set1) / len(nodo[1])
-                probability2 = len(set2) / len(nodo[1])
-
+        elements = len(part) - 1
+        for elem in part:  #Recorremos todas los valores para saber cual es la columna/elemento que mayor descenso de impureza/desorden ofrece.
+            colum=0
+            for value in elem:
+                set1, set2 = divide_set(part, colum, value)
+                
+                probability1 = len(set1) / len(part)
+                probability2 = len(set1) / len(part)
                 current_gain = current_score - (probability1 * scoref(set1)) - (probability2 * scoref(set2))
 
                 if current_gain > best_gain and len(set1) > 0 and len(set2) > 0:
                     best_gain = current_gain
-                    best_criteria = elem, value
+                    best_criteria = colum, value
                     best_sets = set1,set2
+                colum=colum+1
 
         if best_gain > beta:
             true = decisionnode()
@@ -177,14 +171,19 @@ def classify(obj, tree):
         
  
 def test_performance(testset, trainingset):
-    tree = buildtree(part=read(trainingset))
-    test = read(testset)
-    elements = len(test) - 1
-    for elem in range(0, elements):  
-        obj = [elements_value[elem] for elements_value in test]
-        if elem in classify(elem, tree):
+    tree = buildtree(part=trainingset)
+    correct=0
+    for elem in testset:  
+        class_list = classify(elem, tree)
+        if elem[-1] in class_list:
             correct+=1
-    print(correct/elements)
+        else:
+            print("Noooooooo:  Es")
+            print(class_list)
+            print("no")
+            print(elem[-1])
+            print("")
+    print((correct*100)/(len(trainingset)-1))
 
  
 def prune(tree, threshold):
@@ -194,7 +193,9 @@ def transpostedMatrix(data):
     return [list(elem) for elem in zip(*data)]
  
 if __name__ == "__main__":
-    dat_file = read(sys.argv[1])
+    print(sys.argv[1])
+    dat_file=[]
+    read(dat_file, sys.argv[1])
     counts = unique_counts(dat_file)
     gini = gini_impurity(dat_file)
     ent = entropy(dat_file)
@@ -204,7 +205,15 @@ if __name__ == "__main__":
     print("Goal Attributes:", counts)
     print("Gini Index:", gini)
     print("Entropy:", ent)
- 
+
     print("Build Tree: ", tree)
-    #print("Print Tree: ", printtree(tree))
+    print("Print Tree: ", printtree(tree))
     #print('Divide set: (Location, New Zealand)\n', divide_set(dat_file, 1, 'New Zealand'))
+
+    print("------------")
+    print("------------")
+    i=10
+    print(dat_file[:i])
+    print("")
+    print(dat_file[i:])
+    test_performance(testset=dat_file[i:], trainingset=dat_file[:i])
