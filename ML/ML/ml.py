@@ -183,7 +183,10 @@ def test_performance(testset, trainingset):
             print("no")
             print(elem[-1])
             print("")
-    print((correct*100)/(len(trainingset)-1))
+
+    print(correct)
+    print(len(testset))
+    print((correct*100)/(len(testset)))
 
  
 def prune(tree, threshold):
@@ -212,7 +215,7 @@ if __name__ == "__main__":
 
     print("------------")
     print("------------")
-    i=10
+    i=5
     print(dat_file[:i])
     print("")
     print(dat_file[i:])
