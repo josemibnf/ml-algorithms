@@ -177,24 +177,40 @@ def test_performance(testset, trainingset):
         class_list = classify(elem, tree)
         if elem[-1] in class_list:
             correct+=1
+
+        """
         else:
             print("Noooooooo:  Es")
             print(class_list)
             print("no")
             print(elem[-1])
             print("")
+        """
 
-    print(correct)
-    print(len(testset))
-    print((correct*100)/(len(testset)))
+    return (correct*100)/(len(testset))
 
  
-def prune(tree, threshold):
-    pass
+def prune(tree, threshold=1.0):
 
-def transpostedMatrix(data):
-    return [list(elem) for elem in zip(*data)]
+        if tree.fb.results is None:
+                prune(tree.fb, threshold)
+
+        if tree.tb.results is None:
+                prune(tree.tb, threshold)
+        if tree.tb.results is not None and tree.fb.results is not None:
+                tb,fb=[],[]
+                for v,c in tree.fb.results.items():
+                        fb+=[[v]]*c
+                for v,c in tree.tb.results.items():
+                        tb+=[[v]]*c
+                calcul = entropy(tb + fb) - (entropy(tb) + entropy(fb) / 2)
+                if calcul < threshold:
+                    tree.tb.results = None
+                    tree.fb.results = None
+                    tree.results = unique_counts(tb + fb)
  
+
+
 if __name__ == "__main__":
     print(sys.argv[1])
     dat_file=[]
@@ -211,12 +227,13 @@ if __name__ == "__main__":
 
     print("Build Tree: ", tree)
     print("Print Tree: ", printtree(tree))
-    #print('Divide set: (Location, New Zealand)\n', divide_set(dat_file, 1, 'New Zealand'))
 
-    print("------------")
-    print("------------")
-    i=5
-    print(dat_file[:i])
-    print("")
-    print(dat_file[i:])
-    test_performance(testset=dat_file[i:], trainingset=dat_file[:i])
+    print("\n------------")
+
+    to_train=5
+    print("\nTest Performance: ", test_performance(testset=dat_file[to_train:], trainingset=dat_file[:to_train]))
+
+    print("\n---------")
+
+    print("\nPrune Tree: ", prune(tree))
+    print("Print Tree: ", printtree(tree))
