@@ -230,8 +230,12 @@ if __name__ == "__main__":
 
     print("\n------------")
 
-    to_train=5
-    print("\nTest Performance: ", test_performance(testset=dat_file[to_train:], trainingset=dat_file[:to_train]))
+    if(len(sys.argv)>2):
+        to_train = int(sys.argv[2])
+    else:
+        to_train=5
+    print("\nElementos para entrenar: ", to_train)
+    print("Test Performance: ", test_performance(testset=dat_file[to_train:], trainingset=dat_file[:to_train]))
 
     print("\n---------")
 
