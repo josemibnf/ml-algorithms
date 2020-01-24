@@ -39,9 +39,10 @@ def entropy(rows):
  
  
 def divide_set(part, column, value):
-    def split_fun(elem): return elem[column] == value
     if isinstance(value, int) or isinstance(value, float):
         def split_fun(elem): return elem[column] <= value
+    else:
+        def split_fun(elem): return elem[column] == value
 
     set1, set2 = [], []
     for elem in part:
@@ -160,9 +161,10 @@ def classify(obj, tree):
     if tree.results is not None:    #Es nodo hoja.
         return tree.results
     else:
-        def split_fun(elem): return elem[tree.col] == tree.value
         if isinstance(tree.value, int) or isinstance(tree.value, float):
             def split_fun(elem): return elem[tree.col] <= tree.value
+        else:
+            def split_fun(elem): return elem[tree.col] == tree.value
 
         if split_fun(obj):
             return classify(obj, tree.tb)
@@ -226,18 +228,27 @@ if __name__ == "__main__":
     print("Entropy:", ent)
 
     print("Build Tree: ", tree)
-    print("Print Tree: ", printtree(tree))
+    printtree(tree)
 
     print("\n------------")
-
-    if(len(sys.argv)>2):
-        to_train = int(sys.argv[2])
-    else:
-        to_train=5
-    print("\nElementos para entrenar: ", to_train)
+    bool_elem_not_ready = True
+    while bool_elem_not_ready:
+        print("\nNumero de elementos totales: ",len(dat_file))
+        print("Introduce el numero de elementos a entrenar:")
+        to_train = int(input())
+        if to_train<len(dat_file):
+            bool_elem_not_ready=False
+        else:
+            print("Demasiados elementos para entrenar.")
     print("Test Performance: ", test_performance(testset=dat_file[to_train:], trainingset=dat_file[:to_train]))
 
-    print("\n---------")
-
-    print("\nPrune Tree: ", prune(tree))
-    print("Print Tree: ", printtree(tree))
+    print("\n")
+    while True:
+        print("¿Quieres podar el árbol? (Y/N): ")
+        bool_prune = input()
+        if bool_prune=='Y':
+            print("\nPrune Tree: ", prune(tree))
+            printtree(tree)
+            exit()
+        elif bool_prune=='N':
+            exit()
