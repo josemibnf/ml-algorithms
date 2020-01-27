@@ -1,11 +1,8 @@
 # coding=utf-8
-
-
 from math import sqrt
 import random
 import sys
 from copy import deepcopy
-#Perfect(working)
 
 def readfile(filename):
 	with open(filename) as file:
@@ -28,12 +25,8 @@ def euclidean(v1, v2):
 
 
 def manhattan(v1, v2):
-	distance = sum([abs(v1[i]-v2[i]) for i in xrange(len(v1))])
+	distance = sum([abs(v1[i]-v2[i]) for i in range(len(v1))])
 	return distance
-
-
-#96.91
-# euclidean (data[0], data[1])
 
 def pearson(v1,v2):
 	# Simple sums
@@ -60,39 +53,6 @@ class bicluster:
 		self.id = id
 		self.distance = distance
 
-
-def hcluster(rows, distance=pearson):
-	distances={} # stores the distances for efficiency
-	currentclustid=-1 # all except the original items have a negative id
-
-	# Clusters are initially just the rows
-	clust = [bicluster(rows[i], id=i) for i in range(len(rows))]
-	
-        while len(clust)>1: #stop when there is only one cluster left
-		lowestpair = (0, 1)
-		closest = distance(clust[0].vec,clust[1].vec)
-	# loop through every pair looking for the smallest distance
-		for i in range(len(clust)):
-			for j in range(i+1,len(clust)):
-			# distances is the cache of distance calculations
-				if (clust[i].id,clust[j].id) not in distances:
-					distances[(clust[i].id,clust[j].id)] = distance(clust[i].vec,clust[j].vec)
-
-                                d = distances[(clust[i].id,clust[j].id)]
-				if d < closest:
-					closest = d
-					lowestpair = (i,j)
-		# calculate the average of the two clusters
-		mergevec=[(clust[lowestpair[0]].vec[i]+clust[lowestpair[1]].vec[i])/2.0 for i in range(len(clust[0].vec))]	
-		#create the new cluster
-		newcluster=bicluster(mergevec,left=clust[lowestpair[0]],right=clust[lowestpair[1]],distance=closest,id=currentclustid)
-		# cluster ids that weren’t in the original set are negative
-		currentclustid-=1
-		del clust[lowestpair[1]]
-		del clust[lowestpair[0]]
-		clust.append(newcluster)
-        return clust[0]
-
 def printclust(clust, labels=None, n=0):
         # indent to make a hierarchy layout
         for i in range(n):
@@ -113,20 +73,18 @@ def printclust(clust, labels=None, n=0):
         if clust.right != None:
                 printclust(clust.right, labels=labels, n=n + 1)
 
-
-
-
 def kcluster(rows, distance=pearson, k=4):
     # Determine the minimum and maximum values for each point
-    ranges = [(min([row[i] for row in rows]), max([row[i] for row in rows])) for i in range(len(rows[0]))]
+    ranges = [(min([row[i] for row in rows]),
+     max([row[i] for row in rows])) for i in range(len(rows[0]))]
 
   # Create k randomly placed centroids
     clusters = [[random.random() * (ranges[i][1] - ranges[i][0]) + ranges[i][0]
                 for i in range(len(rows[0]))] for j in range(k)]
-    lastmatches = None
+    lastmatches = []
 
     for t in range(100):
-        print 'Iteration %d' % t
+        print("Iteration", t)
 
         bestmatches = [[] for i in range(k)]
 
@@ -137,17 +95,14 @@ def kcluster(rows, distance=pearson, k=4):
 
             for i in range(k):
                 d = distance(clusters[i], row)
-
                 if d < distance(clusters[bestmatch], row):
                     bestmatch = i
-
             bestmatches[bestmatch].append(j)
-
 
         if t%3 == 0 and t != 0: #reset
             for cent in range(0,k):
                 if lastmatches[cent] != bestmatches[cent]:
-                    print "RESETING CLUSTER: %d" %cent
+                    print ("RESETING CLUSTER: ", cent)
 
                     clusters[cent] = [random.random() * (ranges[i][1] - ranges[i][0]) + ranges[i][0]
                         for i in bestmatches[cent]]
@@ -176,13 +131,13 @@ def kcluster(rows, distance=pearson, k=4):
     return bestmatches, clusters
 
 if __name__ == "__main__":
-    rownames, colnames, data= readfile("blogdata.txt")
+    rownames, colnames, data= readfile(sys.argv[1])
     random.seed(6)
     kclust , clusters = kcluster(data)
     
     for i in range(0,len(kclust)):
-        print "CENTROID OF THE ", i+1, "ELEMENT:"
-        print kclust[i]
+        print ("CENTROID OF THE ", i+1, "ELEMENT:")
+        print (kclust[i])
 
 
 
