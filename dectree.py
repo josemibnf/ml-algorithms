@@ -2,9 +2,17 @@ import sys
 from queue import Queue 
 
 def read(data, file_name):
+    if file_name[-1]=="t":  #para .txt
+        split='\t'
+    elif file_name[-1]=="a":
+        split=','    #para .data
+    else:
+        print("Error: extension de archivo invalida.")
+        sys.exit()
+
     with open(file_name, 'r') as f:
         for line in f:
-            treated_line = [i for i in line.rstrip('\n').split('\t')]
+            treated_line = [i for i in line.rstrip('\n').split(split)]
             data.append(treated_line)
 
 
@@ -214,9 +222,13 @@ def prune(tree, threshold=1.0):
 
 
 if __name__ == "__main__":
-    print(sys.argv[1])
+    if len(sys.argv)==1:
+        file_data="decision_tree_example.txt"
+    else:
+        file_data=sys.argv[1]
+    print(file_data)
     dat_file=[]
-    read(dat_file, sys.argv[1])
+    read(dat_file, file_data)
     counts = unique_counts(dat_file)
     gini = gini_impurity(dat_file)
     ent = entropy(dat_file)
