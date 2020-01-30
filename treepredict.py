@@ -265,21 +265,21 @@ def prune(tree,threshold):
 if __name__ == '__main__':
     data=read('decision_tree_example.txt','\t')
     tree=buildtree(data)
-    tree1=read('poker-hand-training-true-1.data',',')
-    tree2=read('poker-hand-training-true-2.data',',')
+    data_train1=read('poker-hand-training-true-1.data',',')
+    data_train2=read('poker-hand-training-true-2.data',',')
 
-    #print gini_impurity(data)
-    #print entropy(data)
-    #print(classify(['(direct)','USA','yes',5],tree))
+    print gini_impurity(data)
+    print entropy(data)
+    print(classify(['(direct)','USA','yes',5],tree))
     
     print "----------RECURSIVE TREE----------"
     printtree(buildtree(data))
     print "----------ITERATIVE TREE----------"
     printtree(buildtree_ite(data))
-    print "----------DESPRES DE PRUNE----------"
+    print "----------PRUNE----------"
     prune(tree,1)
     printtree(tree)
     print "----------TEST PERFORMANCE----------"
-    print test_performance(read('poker-hand-testing.data',','), tree1)
+    print test_performance(read('poker-hand-testing.data',','), data_train1)
     print "----------TEST PERFORMANCE INCREASED----------"
-    print test_performance(read('poker-hand-testing.data',','), tree2)
+    print test_performance(read('poker-hand-testing.data',','), data_train2)
