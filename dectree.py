@@ -200,30 +200,29 @@ def test_performance(testset, trainingset):
     return (correct*100)/(len(testset))
 
  
-def prune(tree, threshold=1.0):
+def prune(tree,threshold=1.0):
+    if tree.tb.results==None: prune(tree.tb,threshold)
+    if tree.fb.results==None: prune(tree.fb,threshold)
+    
+    if tree.tb.results!=None and tree.fb.results!=None:
+        tb,fb=[],[]
+        for v,c in tree.tb.results.items():
+            tb+=[[v]]*c
+        for v,c in tree.fb.results.items():
+            fb+=[[v]]*c
+ 
+        p = float(len(tb) / len(tb + fb))
+        d = entropy(tb+fb) - p*entropy(tb) - (1-p)*entropy(fb)
 
-        if tree.fb.results is None:
-                prune(tree.fb, threshold)
-
-        if tree.tb.results is None:
-                prune(tree.tb, threshold)
-        if tree.tb.results is not None and tree.fb.results is not None:
-                tb,fb=[],[]
-                for v,c in tree.fb.results.items():
-                        fb+=[[v]]*c
-                for v,c in tree.tb.results.items():
-                        tb+=[[v]]*c
-                calcul = entropy(tb + fb) - (entropy(tb) + entropy(fb) / 2)
-                if calcul < threshold:
-                    tree.tb.results = None
-                    tree.fb.results = None
-                    tree.results = unique_counts(tb + fb)
+        if d<threshold:
+            tree.tb,tree.fb=None,None
+            tree.results=unique_counts(tb+fb)
  
 
 
 if __name__ == "__main__":
     if len(sys.argv)==1:
-        file_data="decision_tree_example.txt"
+        file_data="decision_tree_example.txt"  #por defecto.
     else:
         file_data=sys.argv[1]
     print(file_data)
