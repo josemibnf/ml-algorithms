@@ -1,6 +1,24 @@
 import sys
 from queue import Queue 
 
+class Node(object):
+    def __init__(self, part, node):
+        self.part = part
+        self.node = node
+
+class Stack:
+     def __init__(self):
+         self.items = []
+
+     def isEmpty(self):
+         return self.items == []
+
+     def push(self, item):
+         self.items.append(item)
+
+     def pop(self):
+         return self.items.pop()
+
 def read(data, file_name):
     if file_name[-1]=="t":  #para .txt
         split='\t'
@@ -78,77 +96,79 @@ class decisionnode(object):
         self.fb=fb
 
 def buildtree(part, scoref=gini_impurity, beta=0):
-    if len(part) == 0:
-        return decisionnode()
-    current_score = scoref(part)
-    best_gain = 0
-    best_criteria = None
-    best_sets = None
-    elements = len(part) - 1
-    for elem in part:  #Recorremos todas los valores para saber cual es la columna/elemento que mayor descenso de impureza/desorden ofrece.
-        colum=0
-        for value in elem:
-            set1, set2 = divide_set(part, colum, value)
-            probability1 = len(set1) / len(part)
-            probability2 = len(set1) / len(part)
+    if len(part)==0: return decisionnode()
+    current_score=scoref(part)
 
-            current_gain = current_score - (probability1 * scoref(set1)) - (probability2 * scoref(set2))
+    #Set up some variables to track the best criteria
+    best_gain=0.0
+    best_criteria=None
+    best_sets=None
+
+    column_count=len(part[0])-1
+    for col in range(0,column_count):
+        column_values={}
+        for row in part:
+            column_values[row[col]]=1
+    
+        for value in column_values.keys():
+            (set1,set2)=divide_set(part,col,value)
+
+            p1=float(len(set1))/len(part)
+            p2=float(len(set2))/len(part)
+            gain=current_score-p1*scoref(set1)-p2*scoref(set2)
             
-            if current_gain > best_gain and len(set1) > 0 and len(set2) > 0:
-                best_gain = current_gain
-                best_criteria = colum, value
-                best_sets = set1,set2
-            colum=colum+1
-                
-        if best_gain > beta:  #¿Hemos conseguido algun split disminuya la impureza/desorden por encima de beta?
-            true = buildtree(best_sets[0], scoref, beta)
-            false = buildtree(best_sets[1], scoref, beta)
-            return decisionnode(best_criteria[0], best_criteria[1], None, true, false)
-
+            if gain>best_gain and len(set1)>0 and len(set2)>0:
+                best_gain=gain
+                best_criteria=(col,value)
+                best_sets=(set1,set2)
+        
+    if best_gain>0:
+        tb=buildtree(best_sets[0])
+        fb=buildtree(best_sets[1])
+        return decisionnode(best_criteria[0],best_criteria[1],None,tb,fb)
     else:
         return decisionnode(results=unique_counts(part))
  
 def buildtree_ite(part, scoref=gini_impurity, beta=0):
-    rootNode=None
-    fringe=Queue()
-    fringe.put(([], part))
-    while fringe.empty() == False:
-        nodo = fringe.get()
-        current_score = scoref(nodo[1])  
-
-        best_gain = 0
+    stack = []
+    node = Node(part,decisionnode())
+    stack.append(node)
+    
+    while len(stack) != 0:
+        n = stack.pop()
+        current_score = scoref(n.part)
+        best_gain = 0.0
         best_criteria = None
         best_sets = None
-        elements = len(part) - 1
-        for elem in part:  #Recorremos todas los valores para saber cual es la columna/elemento que mayor descenso de impureza/desorden ofrece.
-            colum=0
-            for value in elem:
-                set1, set2 = divide_set(part, colum, value)
-                
-                probability1 = len(set1) / len(part)
-                probability2 = len(set1) / len(part)
-                current_gain = current_score - (probability1 * scoref(set1)) - (probability2 * scoref(set2))
 
-                if current_gain > best_gain and len(set1) > 0 and len(set2) > 0:
-                    best_gain = current_gain
-                    best_criteria = colum, value
-                    best_sets = set1,set2
-                colum=colum+1
+        column_count = len(n.part[0]) - 1 
+        for col in range(0, column_count):
+            column_values={}
+            for row in n.part:
+                column_values[row[col]]=1
+            for value in column_values.keys():
+                set1, set2 = divide_set(n.part, col, value)
+
+                p = float(len(set1)) / len(n.part) 
+                gain = current_score - p*scoref(set1) - (1-p)*scoref(set2) 
+        
+                if gain > best_gain and len(set1) > 0 and len(set2) > 0:
+                    best_gain = gain
+                    best_criteria = (col, value)
+                    best_sets = (set1, set2)
 
         if best_gain > beta:
-            true = decisionnode()
-            false = decisionnode()
-            fringe.put((true ,(best_sets[0]) ))
-            fringe.put((false ,(best_sets[1]) ))
-            if rootNode == None:
-                rootNode = decisionnode(best_criteria[0], best_criteria[1], None, true, false)
-            else:
-                nodo[0].actualiza(best_criteria[0], best_criteria[1], None, true, false)
+            n.node.tb = decisionnode()
+            n.node.fb = decisionnode()
+            n.node.col = best_criteria[0]
+            n.node.value = best_criteria[1]
+            nodeTrueBranch = Node(best_sets[0], n.node.tb)
+            nodeFalseBranch = Node(best_sets[1], n.node.fb)
+            stack.append(nodeTrueBranch)
+            stack.append(nodeFalseBranch)  
         else:
-            nodo[0].actualiza(results=unique_counts(part))
-
-
-        return rootNode
+            n.node.results = unique_counts(n.part)
+    return node.node
 
 
 def printtree(tree, indent=''):
@@ -160,9 +180,9 @@ def printtree(tree, indent=''):
         print(indent + str(tree.col)+':'+str(tree.value)+'? ')
         # Print the branches
         print(indent+'T->')
-        printtree(tree.tb, indent+'  ')
+        printtree(tree.tb, indent+' ')
         print(indent+'F->')
-        printtree(tree.fb, indent+'  ')
+        printtree(tree.fb, indent+' ')
        
  
 def classify(obj, tree):
@@ -232,14 +252,18 @@ if __name__ == "__main__":
     gini = gini_impurity(dat_file)
     ent = entropy(dat_file)
     tree = buildtree(part=dat_file)
+    iter_tree = buildtree_ite(part=dat_file)
  
     #print("Training Set:\n", dat_file)   #Printa todo el DataSet
     print("Goal Attributes:", counts)
     print("Gini Index:", gini)
     print("Entropy:", ent)
 
-    print("Build Tree: ")
+    print("\nBuild Recursive Tree: ")
     printtree(tree)
+
+    print("\nBuild Iterative Tree: ")
+    printtree(iter_tree)
 
     print("\n------------")
     bool_elem_not_ready = True
