@@ -222,7 +222,7 @@ def prune(tree,threshold=1.0):
 
 if __name__ == "__main__":
     if len(sys.argv)==1:
-        file_data="decision_tree_example.txt"  #por defecto.
+        file_data="decision_tree_example.txt"  #por defecto
     else:
         file_data=sys.argv[1]
     print(file_data)
@@ -233,12 +233,12 @@ if __name__ == "__main__":
     ent = entropy(dat_file)
     tree = buildtree(part=dat_file)
  
-    print("Training Set:\n", dat_file)
+    #print("Training Set:\n", dat_file)   #Printa todo el DataSet
     print("Goal Attributes:", counts)
     print("Gini Index:", gini)
     print("Entropy:", ent)
 
-    print("Build Tree: ", tree)
+    print("Build Tree: ")
     printtree(tree)
 
     print("\n------------")
