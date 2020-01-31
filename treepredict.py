@@ -1,4 +1,10 @@
 #!/usr/bin/env python2
+"""
+Codigo fuente: treepredict.py
+Grau Informatica
+X8592934L Yassine El kihal
+18068091G Jose Miguel Avellana
+"""
 
 class Node(object):
     def __init__(self, part, node):
@@ -17,7 +23,6 @@ class Stack:
 
      def pop(self):
          return self.items.pop()
-
 """
 T3 Define a function to load the data into a bidimensional list
 named data
@@ -37,9 +42,9 @@ def parser(element):
             return float(element)
         except ValueError:
             return element
-
 """
 T4 Create counts of possible results
+(The last column of each row is the result)
 """
 def unique_counts(part): 
     results = {}
@@ -48,21 +53,20 @@ def unique_counts(part):
         if r not in results: results[r] = 0
         results[r] += 1
     return results
-
 """
-T5 function that computes the Gini index of a node
+T5 Difine a function that computes the Gini index of a node
 """
 def gini_impurity(part): 
     total = len(part)
     results = unique_counts(part)
     imp = 0
-    
     for i in results:
         imp += pow(float(results[i])/total, 2)
     return 1-imp
-
 """
 T6 function that computes the entropy of a node
+Entropy is the sum of p(x)log(p(x))
+across all the different possible results
 """
 def entropy(part):
     from math import log
@@ -75,12 +79,10 @@ def entropy(part):
         p = float(results[i])/len(part)
         imp -= p*log2(p)
     return imp
-
 """
-T7 function that partitions a previous partition, taking
-into account the values of a given attribute (column).
-column is the index of the column and value is the value of
-the partition criterion.
+T7 Difine a function that partitions a previous partition.
+Divide a ser on specific column. Can handle numeric or 
+categorial values
 """
 def divideset(part, column, value):
     isplit_function = None
@@ -93,10 +95,9 @@ def divideset(part, column, value):
         if split_function(line): set1.append(line)
         else: set2.append(line)
     return set1, set2
-
 '''
-T8 class decisionnode, which represents a node
-in the tree.
+T8 Define a new class decisionnode, which represents a node
+in the tree using the constructor (def__init__(....))
 '''
 class decisionnode:
     def __init__(self,col=-1,value=None,results=None,tb=None,fb=None):
@@ -105,10 +106,9 @@ class decisionnode:
         self.results = results
         self.tb = tb
         self.fb = fb
-
 '''
-T9 recursive function that builds a decision tree using any
-of the impurity measures.
+T9 Difine a new recursive function that builds a decision tree using any
+of the impurity measures we have seen following the criterion.
 '''
 def buildtree(part,scoref=entropy, beta=0):
     if len(part)==0: return decisionnode()
@@ -128,9 +128,9 @@ def buildtree(part,scoref=entropy, beta=0):
         for value in column_values.keys():
             (set1,set2)=divideset(part,col,value)
 
-            p1=float(len(set1))/len(part)
-            p2=float(len(set2))/len(part)
-            gain=current_score-p1*scoref(set1)-p2*scoref(set2)
+            probability1=float(len(set1))/len(part)
+            probability2=float(len(set2))/len(part)
+            gain=current_score-probability1*scoref(set1)-probability2*scoref(set2)
             
             if gain>best_gain and len(set1)>0 and len(set2)>0:
                 best_gain=gain
@@ -143,8 +143,10 @@ def buildtree(part,scoref=entropy, beta=0):
         return decisionnode(best_criteria[0],best_criteria[1],None,tb,fb)
     else:
         return decisionnode(results=unique_counts(part))
-
-
+'''
+T10 Difine a new iterative function that builds a decision tree using any
+of the impurity measures we have seen following the criterion.
+'''
 def buildtree_ite(part, scoref=entropy, beta=0): 
     stack = []
     node = Node(part,decisionnode())
@@ -165,8 +167,8 @@ def buildtree_ite(part, scoref=entropy, beta=0):
             for value in column_values.keys():
                 set1, set2 = divideset(n.part, col, value)
 
-                p = float(len(set1)) / len(n.part) 
-                gain = current_score - p*scoref(set1) - (1-p)*scoref(set2) 
+                probability = float(len(set1)) / len(n.part) 
+                gain = current_score - probability*scoref(set1) - (1-probability)*scoref(set2) 
         
                 if gain > best_gain and len(set1) > 0 and len(set2) > 0:
                     best_gain = gain
@@ -196,6 +198,7 @@ def printtree(tree,indent=''):
     else:
         # Print the criteria
         print str(tree.col)+':'+str(tree.value)+'? '
+
         # Print the branches
         print indent+'T->',
         printtree(tree.tb,indent+' ')
@@ -222,9 +225,11 @@ def classify(obj,tree):
     return classify(obj,branch)
 
 """
-T13/14 Define a function test that takes a test set and a training
+T13 Define a function test that takes a test set and a training
 set and computes the percentage of examples correctly
-classified. Show the quality of the classifier.
+classified. T14 Show the quality of the classifier increasing a 20% the
+training set. You can retrieve data from the following database(Http....)
+
 """
 def test_performance(testset, trainingset):
     tree = buildtree(trainingset)
@@ -237,10 +242,11 @@ def test_performance(testset, trainingset):
     return accuracy/len(testset)
 
 """
-T16 Define a function that every pair of leaves with a common father check if their
-union increases the entropy below a given threshold. If that
-is the case, delete those leaves by joining their prototypes
-in the father
+T16 Define a function that for every pair of leaves with a 
+common father check if their union increases the entropy 
+below a given threshold. If thatis the case, delete those 
+leaves by joining their prototypes in the father.
+This function implements the above prunning strategy.
 """
 def prune(tree,threshold):
     if tree.tb.results==None: prune(tree.tb,threshold)
@@ -253,8 +259,8 @@ def prune(tree,threshold):
         for v,c in tree.fb.results.items():
             fb+=[[v]]*c
  
-        p = float(len(tb) / len(tb + fb))
-        d = entropy(tb+fb) - p*entropy(tb) - (1-p)*entropy(fb)
+        probability = float(len(tb) / len(tb + fb))
+        d = entropy(tb+fb) - probability*entropy(tb) - (1-probability)*entropy(fb)
 
         if d<threshold:
             tree.tb,tree.fb=None,None
@@ -272,14 +278,14 @@ if __name__ == '__main__':
     print entropy(data)
     print(classify(['(direct)','USA','yes',5],tree))
     
-    print "----------RECURSIVE TREE----------"
+    print "----------ARBOL RECURSIVO----------"
     printtree(buildtree(data))
-    print "----------ITERATIVE TREE----------"
+    print "----------ARBOL ITERATIVO----------"
     printtree(buildtree_ite(data))
-    print "----------PRUNE----------"
+    print "----------PODAR ARBOL----------"
     prune(tree,1)
     printtree(tree)
-    print "----------TEST PERFORMANCE----------"
+    print "----------PERFORMANCE TEST----------"
     print test_performance(read('poker-hand-testing.data',','), data_train1)
-    print "----------TEST PERFORMANCE INCREASED----------"
+    print "----------PERFORMANCE TEST INCREASED----------"
     print test_performance(read('poker-hand-testing.data',','), data_train2)

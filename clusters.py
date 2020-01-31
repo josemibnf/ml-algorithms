@@ -1,6 +1,9 @@
 import random
 import math
 
+"""
+Incorporate the following code into a file clusters.py
+"""
 def readfile(filename):
 	with open(filename) as file:
 		lines=[line for line in file]
@@ -113,7 +116,10 @@ def rotatematrix(data):
         newrow = [data[j][i] for j in range(len(data))]
         newdata.append(newrow)
     return newdata
-
+"""
+Incorporate the  function kcluster that implements the 
+algorithm K-means described previously
+"""
 def kcluster(rows,distance=euclidean,k=4):
     it=0
     total=0
@@ -176,6 +182,6 @@ def minim_total(n, nklust):
 if __name__ == '__main__':
     blognames,words,data = readfile('blogdata.txt')
     total, it= minim_total(5, 3)
-    print "MILLOR CONFIGURACIO:",total
-    print "Nombre d'iteracions:",it
+    print "MEJOR COMBINACION:",total
+    print "NUMERO DE ITERACIONES:",it
     
